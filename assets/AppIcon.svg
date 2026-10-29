@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>GGGMac — three G monogram</title>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#283128"/><stop offset="1" stop-color="#101610"/>
+    </linearGradient>
+    <linearGradient id="letters" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#D6ED99"/><stop offset="1" stop-color="#A6C65E"/>
+    </linearGradient>
+    <radialGradient id="glow"><stop stop-color="#AAC95F" stop-opacity=".13"/><stop offset="1" stop-color="#AAC95F" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="202" fill="url(#background)"/>
+  <rect x="66" y="66" width="892" height="892" rx="200" fill="none" stroke="#FFFFFF" stroke-opacity=".08" stroke-width="2"/>
+  <circle cx="512" cy="512" r="390" fill="url(#glow)"/>
+  <g fill="none" stroke="url(#letters)" stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M317.296 442.704 A98 98 0 1 0 346 512 H256"/>
+    <path d="M581.296 442.704 A98 98 0 1 0 610 512 H520"/>
+    <path d="M845.296 442.704 A98 98 0 1 0 874 512 H784"/>
+  </g>
+</svg>

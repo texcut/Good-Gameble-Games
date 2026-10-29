@@ -1,0 +1,22 @@
+name: Game compatibility
+description: Share a reproducible gameplay result.
+body:
+  - type: input
+    id: game
+    attributes:
+      label: Game, store and exact build
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Mac, macOS, Good Gameble Games, runtime and graphics configuration
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What worked and what failed
+      description: Distinguish reaching the menu from gameplay, sound/input, saving and relaunch. For FPS, include resolution, upscaling, scene and settings.
+    validations:
+      required: true

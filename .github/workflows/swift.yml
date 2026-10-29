@@ -1,0 +1,23 @@
+name: Build and test
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
+      - name: Test core
+        run: bash scripts/swift-tool.sh test
+      - name: Test source selection
+        run: python3 -m unittest discover -s scripts/tests
+      - name: Prepare checked release archives
+        run: bash scripts/prepare-release.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Good-Gameble-Games-early-access
+          path: |
+            dist/Good-Gameble-Games-v*.zip
+            dist/SHA256SUMS

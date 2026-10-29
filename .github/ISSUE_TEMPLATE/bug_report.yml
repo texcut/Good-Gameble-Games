@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a launcher, installation or graphics problem.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Good Gameble Games version
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Mac chip and macOS version
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Runtime, graphics backend and game build
+      description: Include the Wine distribution/version, backend, store and exact game version when relevant.
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps, expected result and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Export from Help, review the redacted file, then attach it here. Do not post credentials, game files or Apple/runtime payloads.
