@@ -6,9 +6,9 @@
 
 Good Gameble Games is a free, open-source macOS launcher built with SwiftUI and Wine. This started with one goal: get a legally owned GOG copy of **The Witcher 3: Wild Hunt — Remastered** running on an Apple Silicon Mac, with Direct3D 12 and MetalFX upscaling.
 
-**Early access · 0.14.0 · GPL-3.0-or-later**
+**Early access · 0.14.1 · GPL-3.0-or-later**
 
-[Download the early-access release](https://github.com/texcut/Good-Gameble-Games/releases/tag/v0.14.0). The app archive is for Apple Silicon, is not Apple-notarized, and requires the separately prepared DX12 runtime described below to reproduce the Witcher setup.
+[Download the early-access release](https://github.com/texcut/Good-Gameble-Games/releases/tag/v0.14.1). The app archive is for Apple Silicon, is not Apple-notarized, and requires the separately prepared DX12 runtime described below to reproduce the Witcher setup.
 
 **Fork it, change it, improve it, and share your version.** Contributions and experiments are welcome. When distributing changes, retain the license/notices and provide the corresponding source as required by [GPL-3.0-or-later](LICENSE). See [CONTRIBUTING.md](CONTRIBUTING.md).
 

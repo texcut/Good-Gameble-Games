@@ -558,7 +558,31 @@ final class AppModel {
         panel.nameFieldStringValue = "Good-Gameble-Games-diagnostics.txt"
         panel.allowedContentTypes = [.plainText]
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        let report = """
+        // Keep each section small enough for the Swift 6 compiler on CI.
+        let environmentRuntimes = library.bottles.map { bottle -> String in
+            let checked = bottle.lastSmokeTest?.ISO8601Format() ?? "not run"
+            return "\(bottle.name): \(bottle.runtime.version) at \(bottle.runtime.executable.path); last Windows command test: \(checked)"
+        }.joined(separator: "\n")
+        let launchSettings = library.bottles.filter { D3DMetalRuntime.isManaged($0.runtime.executable) }.map { bottle -> String in
+            let settings = bottle.d3dMetalOptions ?? D3DMetalOptions()
+            return "\(bottle.name): \(settings.summary)"
+        }.joined(separator: "\n")
+        let graphicsReports = library.bottles.map { bottle -> String in
+            let check = bottle.lastGraphicsCheck.flatMap {
+                try? String(data: JSONEncoder().encode($0), encoding: .utf8)
+            } ?? "Not checked"
+            return "\(bottle.name): \(bottle.activeGraphicsBackend.title)\n\(check)"
+        }.joined(separator: "\n")
+        let gameReports = library.games.map { game -> String in
+            let renderer = game.lastRendererReport.flatMap {
+                try? String(data: JSONEncoder().encode($0), encoding: .utf8)
+            } ?? "Renderer not checked"
+            let benchmark = game.lastBenchmark.flatMap {
+                try? String(data: JSONEncoder().encode($0), encoding: .utf8)
+            } ?? "No benchmark"
+            return "\(game.name):\n\(renderer)\n\(benchmark)"
+        }.joined(separator: "\n")
+        let header = """
         Good Gameble Games \(appVersion) — diagnostics
         Date: \(Date().ISO8601Format())
         macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)
@@ -569,29 +593,15 @@ final class AppModel {
         Environments: \(library.bottles.count)
         Library entries: \(library.games.count)
         Status: \(notice)
-
-        Environment runtimes:
-        \(library.bottles.map { "\($0.name): \($0.runtime.version) at \($0.runtime.executable.path); last Windows command test: \($0.lastSmokeTest?.ISO8601Format() ?? "not run")" }.joined(separator: "\n"))
-
-        D3DMetal launch settings:
-        \(library.bottles.filter { D3DMetalRuntime.isManaged($0.runtime.executable) }.map {
-            "\($0.name): \(($0.d3dMetalOptions ?? D3DMetalOptions()).summary)"
-        }.joined(separator: "\n"))
-
-        Graphics reports:
-        \(library.bottles.map { bottle in
-            "\(bottle.name): \(bottle.activeGraphicsBackend.title)\n" + (bottle.lastGraphicsCheck.flatMap { try? String(data: JSONEncoder().encode($0), encoding: .utf8) } ?? "Not checked")
-        }.joined(separator: "\n"))
-
-        Game renderer and benchmark reports:
-        \(library.games.map { game in
-            "\(game.name):\n" + (game.lastRendererReport.flatMap { try? String(data: JSONEncoder().encode($0), encoding: .utf8) } ?? "Renderer not checked") + "\n" +
-            (game.lastBenchmark.flatMap { try? String(data: JSONEncoder().encode($0), encoding: .utf8) } ?? "No benchmark")
-        }.joined(separator: "\n"))
-
-        Latest output (common personal paths and credentials redacted; review before sharing):
-        \(logText)
         """
+        let report = [
+            header,
+            "Environment runtimes:\n" + environmentRuntimes,
+            "D3DMetal launch settings:\n" + launchSettings,
+            "Graphics reports:\n" + graphicsReports,
+            "Game renderer and benchmark reports:\n" + gameReports,
+            "Latest output (common personal paths and credentials redacted; review before sharing):\n" + logText,
+        ].joined(separator: "\n\n")
         do { try DiagnosticRedactor.redact(report).write(to: url, atomically: true, encoding: .utf8) }
         catch { self.error = error.localizedDescription }
     }

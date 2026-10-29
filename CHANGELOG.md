@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.1 — Swift build compatibility
+
+- Split the diagnostic export expression into smaller sections to support the older Swift compiler on GitHub Actions. Local gameplay and library data are unchanged.
+
 ## 0.14.0 — Early access
 
 - Named the public project Good Gameble Games; retained internal GGGMac identifiers and data paths for existing users.
