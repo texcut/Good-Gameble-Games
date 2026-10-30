@@ -113,7 +113,7 @@ struct GraphicsSettingsSheet: View {
                             }
                             if report.backend == .dxmt, report.direct3D12?.passed == false {
                                 Text(
-                                    "A separate diagnostic environment is available under Runtime → Advanced graphics diagnostics."
+                                    "Additional checks are available in the Logs window under Diagnostics."
                                 )
                                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             }

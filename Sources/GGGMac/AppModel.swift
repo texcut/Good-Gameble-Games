@@ -17,19 +17,17 @@ final class AppModel {
     var runtimeScanCount = 0
     var runtimeInstallStage: String?
     var runtimeInstallInProgress = false
-    var testGameDownloadInProgress = false
     var installedGamesBottle: Bottle?
     var graphicsBottle: Bottle?
     var logURL: URL?
     var logText = ""
-    var notice = "Welcome. Set up a Wine runtime to get started."
+    var notice = ""
     var error: String?
     var loadFailed = false
     var stopping = false
     private let runner = ProcessRunner()
     private var logTask: Task<Void, Never>?
     private var runtimeInstallTask: Task<Void, Never>?
-    private var testGameInstallTask: Task<Void, Never>?
     var activeRendererReport: GameRendererReport?
     private var engineLogURL: URL?
 
@@ -37,7 +35,6 @@ final class AppModel {
         self.store = store
         do {
             library = try store.load()
-            if library.runtime != nil { notice = "Ready when you are." }
         } catch { self.error = error.localizedDescription; loadFailed = true }
         refreshRuntimes(announce: false)
         if !loadFailed, let prepared = try? PreparedD3DMetalGame.load(root: store.root), !prepared.isConnected(in: library) {
@@ -61,7 +58,7 @@ final class AppModel {
                 try Data(contentsOf: store.libraryURL).write(to: backup, options: .atomic)
             }
             try commit(updated)
-            notice = "Graphics environment connected. Launch the game from Library."
+            notice = "Graphics environment connected. Select Play to launch the game."
         } catch { self.error = error.localizedDescription }
     }
 
@@ -188,7 +185,7 @@ final class AppModel {
                 arguments: ["wineboot", "--init"], prefix: prefix), logURL: newLog("create-environment"), timeout: .seconds(180))
             if stopping { notice = "Environment setup stopped. Incomplete files are preserved."; return false }
             guard result.exitCode == 0 else {
-                throw LauncherError.commandFailed(result.exitCode, "See Activity for setup output. The incomplete environment is preserved on disk.")
+                throw LauncherError.commandFailed(result.exitCode, "See Logs for setup output. The incomplete environment is preserved on disk.")
             }
             try WineCommand.validatePrefix(prefix)
             var updated = library
@@ -197,29 +194,6 @@ final class AppModel {
             notice = "\(name) is ready. Add a Windows executable or run an installer."
             return true
         } catch { self.error = error.localizedDescription; return false }
-    }
-
-    func prepareDirect3D12Test() async {
-        guard let bottle = await direct3D12Bottle() else { return }
-        graphicsBottle = bottle
-        await checkGraphics(bottleID: bottle.id)
-    }
-
-    private func direct3D12Bottle() async -> Bottle? {
-        guard !busy, !loadFailed, let runtime = library.runtime else { return nil }
-        let base = "Direct3D 12 test"
-        var bottle = library.bottles.first {
-            ($0.name == base || $0.name.hasPrefix(base + " ")) && $0.runtime == runtime && $0.activeGraphicsBackend == .runtimeDefault
-        }
-        if bottle == nil {
-            let oldIDs = Set(library.bottles.map(\.id))
-            let names = Set(library.bottles.map(\.name))
-            var name = base, number = 2
-            while names.contains(name) { name = "\(base) \(number)"; number += 1 }
-            guard await createBottle(name: name) else { return nil }
-            bottle = library.bottles.first { !oldIDs.contains($0.id) }
-        }
-        return bottle
     }
 
     func pickEXE() -> URL? {
@@ -290,11 +264,10 @@ final class AppModel {
     }
 
     @discardableResult
-    func launch(_ game: Game, benchmark: Bool = false) async -> Bool {
+    func launch(_ game: Game) async -> Bool {
         guard !busy, !loadFailed, let bottle = library.bottles.first(where: { $0.id == game.bottleID }) else { return false }
-        guard !benchmark || game.launchProfile == .fteDirect3D11 else { return false }
         let runtime = bottle.runtime
-        begin(benchmark ? "Benchmarking LibreQuake at 720p…" : "Running \(game.name)")
+        begin("Running \(game.name)")
         activeRendererReport = nil
         activeGameID = game.id
         activePrefix = store.prefix(for: bottle)
@@ -312,7 +285,7 @@ final class AppModel {
             }
             var launchGame = game
             if game.launchProfile == .fteDirect3D11 {
-                launchGame.arguments = GameLaunchProfile.libreQuakeArguments + (benchmark ? GameLaunchProfile.libreQuakeBenchmarkArguments : [])
+                launchGame.arguments = GameLaunchProfile.libreQuakeArguments
                 engineLogURL = try FTEGameSession.prepare(executable: game.executable)
             }
             let command = try WineCommand.launch(runtime: runtime, game: launchGame, prefix: store.prefix(for: bottle), graphics: bottle.activeGraphicsBackend,
@@ -320,19 +293,17 @@ final class AppModel {
             if game.launchProfile == .sdlDirect3D11 {
                 try await SopwithCompatibility.prepare(runtime: runtime, prefix: store.prefix(for: bottle), logDirectory: store.logsDirectory)
             }
-            let launchLog = newLog(benchmark ? "benchmark" : "launch")
+            let launchLog = newLog("launch")
             if D3DMetalRuntime.isManaged(runtime.executable) {
                 let keys: Set<String> = ["D3DM_SUPPORT_DXR", "ROSETTA_ADVERTISE_AVX", "WINEMSYNC", "D3DM_MTL4", "MTL_HUD_ENABLED",
                                          "D3DM_ENABLE_METALFX", "WINEDLLOVERRIDES"]
                 try JSONEncoder().encode(command.environment.filter { keys.contains($0.key) })
                     .write(to: launchLog.deletingPathExtension().appendingPathExtension("environment.json"), options: .atomic)
             }
-            let result = try await runner.run(command, logURL: launchLog, timeout: benchmark ? .seconds(180) : nil)
+            let result = try await runner.run(command, logURL: launchLog, timeout: nil)
             let output = latestOutput()
             let renderer = GameRendererReport.parse(output, profile: game.launchProfile) ?? activeRendererReport
             let expectedExit = game.launchProfile?.expectsExitCode(result.exitCode, output: output) ?? (result.exitCode == 0)
-            let measurement = benchmark && !stopping && expectedExit && renderer?.usesDirect3D11 == true
-                ? GameBenchmark.parse(output, runtimeVersion: runtime.version) : nil
             if let engineLogURL {
                 try? Data(LogReader.tail(engineLogURL).utf8).write(to: result.logURL.deletingPathExtension().appendingPathExtension("engine.log"), options: .atomic)
             }
@@ -340,20 +311,12 @@ final class AppModel {
             if let index = updated.games.firstIndex(where: { $0.id == game.id }) {
                 updated.games[index].lastPlayed = Date()
                 if game.launchProfile != nil { updated.games[index].lastRendererReport = renderer }
-                if let measurement { updated.games[index].lastBenchmark = measurement }
             }
             try commit(updated)
             if !expectedExit && !stopping {
-                throw LauncherError.commandFailed(result.exitCode, "Open Activity to inspect the log.")
+                throw LauncherError.commandFailed(result.exitCode, "Open Logs to inspect the log.")
             }
             notice = stopping ? "Environment stopped." : "\(game.name) exited (code \(result.exitCode))."
-            if game.launchProfile != nil, !stopping {
-                notice += renderer.map { " Renderer: \($0.renderer)." } ?? " Renderer could not be confirmed; see Activity."
-            }
-            if benchmark && !stopping {
-                notice = measurement.map { "LibreQuake timedemo: \(String(format: "%.1f", $0.framesPerSecond)) FPS · 720p preset · DXMT." }
-                    ?? "Benchmark did not produce a verified Direct3D 11 result. See Activity."
-            }
             return !stopping
         } catch { self.error = error.localizedDescription; return false }
     }
@@ -362,9 +325,7 @@ final class AppModel {
         chooseInstaller(in: bottle)
     }
 
-    func installIntoDirect3D12Environment() { chooseInstaller(in: nil) }
-
-    private func chooseInstaller(in selectedBottle: Bottle?) {
+    private func chooseInstaller(in bottle: Bottle) {
         guard !busy, !loadFailed else { return }
         let panel = NSOpenPanel()
         panel.title = "Choose a Windows installer or its folder"
@@ -378,12 +339,6 @@ final class AppModel {
             guard !busy, !loadFailed else { return }
             do {
                 let source = try InstallerSource.resolve(selection)
-                let bottle: Bottle
-                if let selectedBottle { bottle = selectedBottle }
-                else {
-                    guard let prepared = await direct3D12Bottle() else { return }
-                    bottle = prepared
-                }
                 let size = ByteCountFormatter.string(fromByteCount: source.dataBytes, countStyle: .file)
                 notice = source.dataFiles.isEmpty ? "Installer selected. It will check any required game data." :
                     "Found \(source.dataFiles.count) numbered data parts (\(size)), with no numbering gaps. The installer checks completeness and integrity."
@@ -391,68 +346,6 @@ final class AppModel {
                     executable: source.executable, bottleID: bottle.id)
                 if await launch(installer) { installedGamesBottle = bottle }
             } catch { self.error = error.localizedDescription }
-        }
-    }
-
-    func startTestGameInstall(in bottle: Bottle) {
-        guard !busy, !loadFailed, testGameInstallTask == nil else { return }
-        testGameInstallTask = Task {
-            begin("Downloading OpenTTD Windows installer…")
-            testGameDownloadInProgress = true
-            var executable: URL?
-            do {
-                executable = try await TestGameDownload.download(root: store.root)
-                try Task.checkCancellation()
-            } catch {
-                executable = nil
-                if Task.isCancelled { notice = "Game download cancelled." }
-                else { self.error = error.localizedDescription }
-            }
-            testGameDownloadInProgress = false
-            finish()
-            if let executable, !Task.isCancelled {
-                let installer = Game(name: "OpenTTD installer", executable: executable, bottleID: bottle.id)
-                if await launch(installer) { installedGamesBottle = bottle }
-            }
-            testGameInstallTask = nil
-        }
-    }
-
-    func cancelTestGameDownload() { testGameInstallTask?.cancel() }
-
-    func startDirect3DGameInstall(in bottle: Bottle, threeD: Bool = false) {
-        guard !busy, !loadFailed, testGameInstallTask == nil else { return }
-        testGameInstallTask = Task {
-            let name = threeD ? "LibreQuake" : "SDL Sopwith"
-            begin("Downloading and setting up \(name)…")
-            testGameDownloadInProgress = true
-            defer { testGameDownloadInProgress = false; testGameInstallTask = nil; finish() }
-            do {
-                guard bottle.activeGraphicsBackend == .dxmt else {
-                    throw LauncherError.gameSetupFailed("Choose DXMT in this environment’s Windows graphics settings first.")
-                }
-                try await GraphicsBackendManager(prefix: store.prefix(for: bottle)).verifySelection(.dxmt)
-                let executable: URL
-                if threeD { executable = try await ThreeDTestGame().install(root: store.root, prefix: store.prefix(for: bottle)) }
-                else {
-                    executable = try await PortableTestGame().install(root: store.root, prefix: store.prefix(for: bottle))
-                    try await SopwithCompatibility.prepare(runtime: bottle.runtime, prefix: store.prefix(for: bottle), logDirectory: store.logsDirectory)
-                }
-                try Task.checkCancellation()
-                var updated = library
-                if !updated.games.contains(where: { $0.bottleID == bottle.id && ExecutableIdentity.matches($0.executable, executable) }) {
-                    try updated.registerGame(name: name, executable: executable, bottleID: bottle.id,
-                        arguments: threeD ? GameLaunchProfile.libreQuakeArguments : [])
-                }
-                if let index = updated.games.firstIndex(where: { $0.bottleID == bottle.id && ExecutableIdentity.matches($0.executable, executable) }) {
-                    updated.games[index].launchProfile = threeD ? .fteDirect3D11 : .sdlDirect3D11
-                }
-                try commit(updated)
-                notice = "\(name) added to your library."
-            } catch {
-                if Task.isCancelled { notice = "Game setup cancelled." }
-                else { self.error = error.localizedDescription }
-            }
         }
     }
 
@@ -472,7 +365,7 @@ final class AppModel {
             updated.bottles[index].graphicsBackend = backend == .runtimeDefault ? nil : backend
             updated.bottles[index].lastGraphicsCheck = nil
             try commit(updated)
-            notice = "\(bottle.name): \(backend.title) selected. Run Check graphics to validate it."
+            notice = "\(bottle.name): \(backend.title) selected."
         } catch {
             let original = error.localizedDescription
             if deployed {
@@ -524,7 +417,7 @@ final class AppModel {
             let result = try await runner.run(command, logURL: newLog("windows-smoke-test"), timeout: .seconds(30))
             if stopping { notice = "Environment check stopped."; return }
             guard result.exitCode == 0 else {
-                throw LauncherError.commandFailed(result.exitCode, "Wine could not complete the environment check. See Activity for details.")
+                throw LauncherError.commandFailed(result.exitCode, "Wine could not complete the environment check. See Logs for details.")
             }
             guard LogReader.tail(result.logURL).contains(WineCommand.smokeMarker) else {
                 throw LauncherError.smokeTestFailed

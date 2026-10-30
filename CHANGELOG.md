@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.15.0 — Unreleased
+
+Source update: **30 October 2026**. The published binary release remains 0.14.1.
+
+- Replaced the sidebar and separate Library, Environments and Runtime pages with one setup-and-games page.
+- Added numbered first-run steps, inline environment creation and compact rows for existing libraries. Setup can be reopened without leaving the page.
+- Moved Activity into a separate Logs window with exports and optional diagnostics.
+- Removed slogans, demo-game downloads, timedemo controls and the automatic diagnostic-environment flow from the player interface.
+- Preserved existing library entries, runtime selections, installed software and compatibility profiles.
+- Setup progress is derived from the saved library, including environments with their own runtime and no default selected. Removing the last game restores setup guidance.
+- Added setup-state coverage for new, partial and restored libraries. The local checks pass 83 Swift tests and six packaging tests; visual review remains manual.
+
 ## 0.14.1 — Swift build compatibility
 
 - Split the diagnostic export expression into smaller sections to support the older Swift compiler on GitHub Actions. Local gameplay and library data are unchanged.

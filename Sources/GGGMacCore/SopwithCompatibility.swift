@@ -23,7 +23,7 @@ public enum SopwithCompatibility {
         try Task.checkCancellation()
         // No /f: reg.exe must not overwrite a value that appeared since the query.
         let write = try await command(["add", key, "/v", "Version", "/t", "REG_SZ", "/d", "win7"], label: "configure")
-        guard write.exitCode == 0 else { throw LauncherError.gameSetupFailed("Sopwith's Windows 7 compatibility setting could not be saved. See Activity logs.") }
+        guard write.exitCode == 0 else { throw LauncherError.gameSetupFailed("Sopwith's Windows 7 compatibility setting could not be saved. See Logs logs.") }
         let verify = try await command(["query", key, "/v", "Version"], label: "verify")
         guard verify.exitCode == 0, hasWindows7Value(LogReader.tail(verify.logURL)) else {
             throw LauncherError.gameSetupFailed("Sopwith's Windows version setting could not be verified.")

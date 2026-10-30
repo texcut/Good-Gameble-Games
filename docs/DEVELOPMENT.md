@@ -53,3 +53,14 @@ Library saves are atomic. Schema upgrades preserve the previous library. Damaged
 Games use explicit `WINEPREFIX` values and the executable's directory as working directory. Environment variables that could redirect Wine are filtered. Process output is file-backed to avoid pipe deadlocks. One foreground operation is supported. Launch tracking follows the initial Wine process; detached child launchers are a known limitation.
 
 Keep diagnostic logging and compatibility details behind explicit actions. A successful API probe is not proof of game rendering, stability or performance. See [contributing](../CONTRIBUTING.md) before changing runtime or compatibility behavior.
+
+## Isolated interface previews
+
+Debug builds accept `GGGMAC_PREVIEW_ROOT` as an absolute directory for a temporary library. Release builds ignore it. This supports manual checks of empty and populated libraries without changing the real application data:
+
+```sh
+bash scripts/build-app.sh debug
+GGGMAC_PREVIEW_ROOT=/tmp/gggmac-empty-preview "dist/Good Gameble Games.app/Contents/MacOS/GGGMac"
+```
+
+Use temporary fixtures for a returning library; never put private library data in the repository. The main page derives setup progress from saved runtime/environment/game records. Logs is a separate SwiftUI window sharing the same model. Legacy renderer profiles and their core fixtures are retained for already installed entries, but demo download and benchmark controls have been removed from the application.

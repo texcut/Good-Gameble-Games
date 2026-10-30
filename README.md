@@ -6,9 +6,11 @@
 
 Good Gameble Games is a free, open-source macOS launcher built with SwiftUI and Wine. This started with one goal: get a legally owned GOG copy of **The Witcher 3: Wild Hunt — Remastered** running on an Apple Silicon Mac, with Direct3D 12 and MetalFX upscaling.
 
-**Early access · 0.14.1 · GPL-3.0-or-later**
+**In development · 0.15.0 · GPL-3.0-or-later**
 
-[Download the early-access release](https://github.com/texcut/Good-Gameble-Games/releases/tag/v0.14.1). The app archive is for Apple Silicon, is not Apple-notarized, and requires the separately prepared DX12 runtime described below to reproduce the Witcher setup.
+The current source includes the **0.15.0 interface update**: one setup-and-games page, numbered first-run steps, a compact game list after setup, and a separate Logs window. Slogans, free-game downloads and benchmark controls have been removed. See the [changelog](CHANGELOG.md#0150--unreleased) and [setup guide](docs/GETTING_STARTED.md).
+
+[Download the latest published early-access app (0.14.1)](https://github.com/texcut/Good-Gameble-Games/releases/tag/v0.14.1). **That download still uses the previous interface.** Build from the current source for the new layout; a 0.15.0 binary release has not been published. App archives target Apple Silicon, are not Apple-notarized, and require the separately prepared DX12 runtime described below to reproduce the Witcher setup.
 
 **Fork it, change it, improve it, and share your version.** Contributions and experiments are welcome. When distributing changes, retain the license/notices and provide the corresponding source as required by [GPL-3.0-or-later](LICENSE). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -16,7 +18,7 @@ Good Gameble Games is a free, open-source macOS launcher built with SwiftUI and 
 
 **Only one game is claimed as tested for this release: the GOG Witcher 3 remaster, version 5.01, with the exact executable hash below.** It was installed, launched and played on an **Apple M3 Max, macOS 27.2**, using **Wine 11.16** and Apple's **Evaluation environment for Windows games 4.0 beta 3**. The GPU core count and memory configuration were not recorded.
 
-Other games, other Macs, other Witcher builds, the Steam edition, ray tracing and frame generation are not validated by this release. Optional free games in the app were used for development checks; they are not a compatibility promise. This is early-access software, not a full-game stability certification.
+Other games, other Macs, other Witcher builds, the Steam edition, ray tracing and frame generation are not validated by this release. This is early-access software, not a full-game stability certification.
 
 ### Observed FPS and settings experiments
 
@@ -44,7 +46,7 @@ Supported original `bin/x64_dx12/witcher3.exe`:
 With a prepared D3DMetal runtime connected:
 
 1. Close the game and select the **original** `bin/x64_dx12/witcher3.exe` as its library executable.
-2. Open **Library → Graphics and performance…**, enable **Use MetalFX (DLSS)**, and save. The app checks the original hash, expected instructions and output hash before using a separate `witcher3-gggmac-metalfx.exe` beside it. **The original executable stays untouched.**
+2. Use the game row’s **Graphics and performance** button (sliders icon), enable **Use MetalFX (DLSS)**, and save. The app checks the original hash, expected instructions and output hash before using a separate `witcher3-gggmac-metalfx.exe` beside it. **The original executable stays untouched.**
 3. Start the game from the app and select **DLSS** in the game's graphics options. Here the DLSS interface routes to **Apple MetalFX temporal upscaling** through the runtime's NGX/NVAPI bridge.
 4. Enable **Show FPS and frame times** to verify that the HUD shows MetalFX scaling input and target resolutions. A saved checkbox alone does not prove upscaling is active.
 
@@ -66,12 +68,24 @@ You need to own the game and obtain Apple's evaluation environment directly from
 
 Once your compatible runtime/environment is prepared:
 
-1. Connect the runtime in **Runtime** and use its prepared environment.
+1. In **Setup → 1. Connect a runtime**, connect the runtime and use its prepared environment.
 2. Download the GOG **offline** installer: the small setup `.exe` and **every** numbered `.bin` part, together in one folder. The GOG Galaxy downloader is not the offline installer.
-3. Choose **Environments → Run installer…**, finish installation, then add the DX12 executable to the library.
-4. Apply the supported MetalFX setup above and launch from **Library**.
+3. Use **3. Install or add a game → Run installer…**, finish installation, then add the DX12 executable to the library.
+4. Apply the supported MetalFX setup above and press **Play** on the game row.
 
 [Getting started](docs/GETTING_STARTED.md) covers the launcher, local library and installers. Graphical setup for the managed Direct3D 10/11 path is available, but it is separate from the manually prepared Witcher DX12 environment.
+
+## One-page setup
+
+On a first run, the main page shows three numbered steps:
+
+1. **Connect a runtime.** Select a compatible Wine executable. For Witcher 3, use a prepared D3DMetal runtime; the optional standard Wine download only supplies the Direct3D 10/11 path.
+2. **Create an environment.** Enter a name and create its Windows filesystem on the same page.
+3. **Install or add a game.** Run a local installer or select an installed `.exe`. After installation, choose the game's executable and press Play.
+
+Once a game has been added, the main page opens as a compact game list. **Setup** reopens runtime and environment controls on the same page. **Install…** runs an installer in an existing environment, and **Add game** links an installed executable.
+
+**Logs** opens a separate window for process output, diagnostic exports and optional Wine/graphics checks. Open it from the header or **Help → Show Logs** (Shift–Command–L). There are no free-game downloads or benchmark controls in the player interface. Existing library entries and saved environments are retained; removing the last game restores setup guidance.
 
 ## Build and run
 
@@ -98,7 +112,7 @@ bash scripts/prepare-release.sh
 
 The earlier working name was GGGMac. Internal Swift targets, the bundle identifier and `~/Library/Application Support/GGGMac/` are retained so existing libraries keep working. That folder contains library metadata, environments, runtimes and logs. Removing a library entry leaves the game files in place. Closing the launcher leaves Windows programs running; **Stop environment** explicitly ends them.
 
-Diagnostics are exported locally with common home paths and credential patterns redacted; review the file before sharing it. Nothing is uploaded automatically. The managed runtime and optional games download only when requested.
+Diagnostics are exported locally with common home paths and credential patterns redacted; review the file before sharing it. Nothing is uploaded automatically. The managed runtime downloads only when requested.
 
 ## Help improve it
 

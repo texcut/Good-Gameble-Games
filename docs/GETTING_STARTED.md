@@ -1,51 +1,61 @@
 # Getting started
 
-## Wine and environments
+## First run: three steps on one page
 
-Good Gameble Games manages the library; Wine runs Windows programs. Open **Runtime** and either download managed Wine or choose an installed `wine` / `wine64` executable. Keep a manually connected runtime in its original distribution folder: its libraries are required.
+### 1. Connect a runtime
 
-The managed download is the pinned Whisky community Wine 11.0 distribution. Setup checks the download, stages extraction, and verifies the runtime before selecting it. It requires macOS 15+, Rosetta 2 on Apple Silicon, and at least 2 GB free space before game installation. Rosetta and Apple license acceptance remain under your control.
+Select **Connect runtime…** and choose the `wine` or `wine64` executable from a compatible macOS Wine distribution. Keep its distribution folder intact: Wine needs the accompanying libraries.
 
-In **Environments**, create an environment for a game or a group of compatible games. Each environment has its own Windows files and runtime selection. Changing the default runtime affects new environments; change an existing one through **Actions → Change runtime**.
+**For Witcher 3 / Direct3D 12, connect an already prepared D3DMetal runtime.** A graphical Apple-payload importer is not included. See [graphics and compatibility](GRAPHICS.md) for the tested configuration and current manual setup limitation.
 
-For the managed Direct3D 10/11 path, choose **Actions → Graphics → DXMT → Apply**. Return to Runtime default before changing an environment's runtime. Direct3D 12 uses a different setup; see [graphics](GRAPHICS.md).
+**Runtime options** contains installed-runtime discovery and the optional managed Wine 11.0 download for Direct3D 10/11. That download is 332 MB, requires macOS 15+, Rosetta 2 on Apple Silicon and at least 2 GB free space, and does not provide the Witcher DX12 setup. Scan again searches existing files; it does not install Wine.
 
-## Install a game
+The default runtime applies to new environments. Existing environments keep their assigned runtime.
 
-Choose **Run installer…** in the intended environment. Complete the Windows installer, then select the installed executable in the discovery sheet and add it to Library. **Actions → Find installed games** scans again. If the executable is elsewhere, use **Add game** and choose it manually.
+### 2. Create an environment
 
-For GOG offline installers, download the small setup `.exe` and every numbered `.bin` part into the same folder. Select the installer folder so macOS grants access to all the parts. Good Gameble Games checks numbering gaps, duplicates, empty files and incomplete downloads before opening the installer. A GOG Galaxy downloader is not the offline game installer.
+Enter a name and choose **Create environment**. Wine prepares the Windows files; the first setup may take a few minutes. An environment stores installed software and settings separately from other environments.
 
-The app does not sign into stores or download games you own through store accounts. Use your own legitimately obtained installers or existing files.
+Each environment row has **Graphics…** and a menu for changing its runtime, finding installed games or opening its folder. For the managed Direct3D 10/11 path, select **Graphics… → DXMT → Apply**. Return to Runtime default before changing the runtime. A prepared D3DMetal environment uses Runtime default.
 
-## Launch and graphics
+### 3. Install or add a game
 
-Select **Play** in Library. The game's environment supplies Wine and graphics settings; its executable directory is the working directory. Additional launch arguments are available when adding a game.
+Select an environment if there is more than one. Choose **Run installer…** for a local Windows installer, or **Add installed game…** for an existing `.exe`.
 
-For a prepared D3DMetal game, **Graphics and performance…** controls MetalFX, ray tracing availability, MSync, the Metal backend and the optional FPS overlay. MetalFX also needs **DLSS selected inside the game**. Start with frame generation off; a successful upscaling result does not verify frame generation.
+For GOG offline downloads, keep the small setup `.exe` and **every** numbered `.bin` part in the same folder and select that folder. The app checks numbering gaps and incomplete downloads before opening the installer. A GOG Galaxy downloader is not the offline game installer.
 
-For the supported Witcher build, MetalFX creates and launches a separate compatibility executable. Turning MetalFX off returns to the original. Unsupported executable hashes are not patched. Details are in [graphics and compatibility](GRAPHICS.md).
+Complete the Windows installer. After it closes, select the installed game executable in the discovery sheet and add it to the library. **Find installed games…** scans again. For the supported Witcher build, choose the original `bin/x64_dx12/witcher3.exe`.
 
-## Free games
+The app does not sign into stores or download purchased games through store accounts. Use your own installers or existing files.
 
-**Free games…** offers OpenTTD, SDL Sopwith and LibreQuake. Downloads come from their upstream sources and are checked before installation. License documents and manuals stay with the installed files. Sopwith and LibreQuake require DXMT in the selected environment.
+## After setup
 
-## When something fails
+The main page opens as a compact game list. Select **Play** to launch a game. The sliders button opens graphics settings; the row menu can reveal its executable or remove the library entry. Removing an entry leaves its files in place.
 
-**Activity** shows process output and offers **Stop environment**. Stopping an environment can discard unsaved Windows work. Closing the launcher alone leaves Windows programs running.
+**Setup** reopens all three configuration sections on the same page. Completed steps remain compact. Use **Add another environment** when needed; **Install…** above the game list runs an installer in an existing environment. **Add game** links an existing executable. If the last game entry is removed, the numbered guidance returns.
 
-**Environments → Actions → Check environment** checks basic Wine command execution. Graphics diagnostics are available in the graphics panel; a separate diagnostic environment is under **Runtime → Advanced graphics diagnostics**. These checks help isolate failures but do not prove that a specific game works.
+Existing libraries do not need to repeat setup. An environment's assigned runtime counts even if no default runtime is selected.
 
-Use **Help → Export Diagnostics…** when reporting an issue. Common personal paths and credential patterns are redacted in the exported copy; on-disk logs remain unchanged. Review exported text before attaching it to a public issue.
+For prepared D3DMetal games, **Graphics and performance** controls MetalFX, ray tracing availability, MSync, Metal backend and the FPS overlay. MetalFX also requires **DLSS selected inside the game**. Frame generation is not validated. The supported Witcher workaround writes a separate compatibility copy, preserves the original executable and refuses unknown hashes. See [graphics and compatibility](GRAPHICS.md).
+
+There are no free-game downloads or timedemo controls in this interface. Previously added games remain ordinary library entries.
+
+## Logs and troubleshooting
+
+**Logs** opens a separate window. **Help → Show Logs** (Shift–Command–L) opens the same window. It shows the current process output, can open the logs folder and exports diagnostics. **Diagnostics** contains optional Wine, graphics and window checks for an existing environment; no diagnostic environment is created automatically.
+
+**Stop environment** ends Windows programs in the active environment and can discard unsaved Windows work. It is available while an operation is active on the main page and in Logs. Closing the launcher alone leaves Windows programs running.
+
+Diagnostic exports redact common personal paths and credential patterns; on-disk logs remain unchanged. Review exports before attaching them to a public issue.
 
 ## Files and backups
 
-All application data is under `~/Library/Application Support/GGGMac/`:
+All application data stays under `~/Library/Application Support/GGGMac/`:
 
-- `library.json`: game entries, environments and settings. Before a schema upgrade, the previous file is preserved as `library-vN.backup.json`.
-- `Bottles/`: Wine environments, including installed games. Back up the whole relevant environment, including `.gggmac-graphics` driver backups.
+- `library.json`: library entries, environments and settings. Before a schema upgrade, the old file is preserved as `library-vN.backup.json`.
+- `Bottles/`: Windows environments and installed software. Back up the relevant whole environment, including graphics-driver backups.
 - `Runtimes/`: downloaded or manually prepared managed runtimes.
-- `Downloads/`: optional verified game downloads.
-- `Logs/`: full local process logs. The Activity view displays the latest 64 KB; automatic log rotation is not included yet.
+- `Downloads/`: previously downloaded development-game archives, if present. This version does not download those games.
+- `Logs/`: full local process logs. The Logs window shows the latest 64 KB; automatic rotation is not included yet.
 
-Removing a library entry leaves the underlying files in place. Good Gameble Games does not delete environments or games automatically. Back up environments before external runtime upgrades or game changes.
+The interface change does not move existing data or delete installed games. Back up environments before external runtime upgrades or game changes.

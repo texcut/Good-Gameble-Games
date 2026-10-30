@@ -4,7 +4,7 @@
 
 The standard runtime download is [Whisky community Wine Libraries 3.1.1](https://github.com/frankea/Whisky/releases/tag/v3.1.1), based on Wine 11.0. The app pins its archive size and SHA-256, checks extraction paths, and keeps it in a versioned directory. It is downloaded from upstream, not redistributed inside Good Gameble Games.
 
-DXMT translates Direct3D 10/11 to Metal. Select it through **Environments → Actions → Graphics**. Good Gameble Games backs up original DLLs and records what it deploys. Returning to Runtime default restores those files. Unknown edits and conflicting backups are preserved and reported instead of overwritten.
+DXMT translates Direct3D 10/11 to Metal. Select it through **Setup → 2. Create an environment → Graphics…**. Good Gameble Games backs up original DLLs and records what it deploys. Returning to Runtime default restores those files. Unknown edits and conflicting backups are preserved and reported instead of overwritten.
 
 DXMT does not implement Direct3D 12. A stock Wine D3D12 device responding to a small diagnostic does not imply that a modern DX12 game meets its feature requirements.
 
@@ -50,6 +50,6 @@ The compatibility copy removes three Wine-specific feature gates. Actual device 
 
 ## Observed gameplay
 
-The only game claimed as tested for this release is the GOG Witcher 3 remaster 5.01 on an M3 Max running macOS 27.2. Development checks with optional free games do not extend that support claim. The Witcher HUD confirmed temporal MetalFX scaling from 1707×960 to a 2560×1440 target. The [README test observations](../README.md#observed-fps-and-settings-experiments) record the available FPS readings and their limitations; sustained 60 FPS at 1440p was not achieved.
+The only game claimed as tested for this release is the GOG Witcher 3 remaster 5.01 on an M3 Max running macOS 27.2. Earlier free-game development checks do not extend that support claim; the player interface no longer offers those downloads. The Witcher HUD confirmed temporal MetalFX scaling from 1707×960 to a 2560×1440 target. The [README test observations](../README.md#observed-fps-and-settings-experiments) record the available FPS readings and their limitations; sustained 60 FPS at 1440p was not achieved.
 
 This is limited hardware/build evidence. It is not a promise for other Macs, game builds or AAA titles. Ray tracing, frame generation, controllers, detached launchers and anti-cheat require their own validation. The optional [graphics diagnostics](../Tools/GraphicsProbe/README.md) verify small API operations; they are not game benchmarks.
